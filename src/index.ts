@@ -1,9 +1,8 @@
 import 'dotenv/config'
-import { accountInfo } from './services/account.service'
+import { calculateUseCase } from './usecase/CalculateUseCase'
 
 console.log('Starting monitoring...')
 
 setInterval(async () => {
-  const info = await accountInfo()
-  console.log(info)
+  calculateUseCase()
 }, 3000)

@@ -16,7 +16,7 @@ export async function accountInfo(): Promise<AxiosResponse<AccountInfo>> {
 
   const config: AxiosRequestConfig = {
     method: 'GET',
-    url: `/v3/account?timestamp=${timestamp}&recvWindow=${recvWindow}&signature=${signature}`,
+    url: `/v1/account?timestamp=${timestamp}&recvWindow=${recvWindow}&signature=${signature}`,
   }
 
   return await privateApi().request<AccountInfo>(config)
