@@ -19,12 +19,12 @@ export async function calculateUseCase(): Promise<void> {
   const futureFinance = futureBuyPrice * futureBuyAmount
 
   const payout = ((futureBuyPrice / spotSelPrice) - 1) * 100
-  const updatedPayout = (Math.pow( (1 + (payout / 100)),  (365 / days)) - 1) * 100
+  const yearPayout = (Math.pow((1 + (payout / 100)),  (365 / days)) - 1) * 100
 
   console.log(`Dias vencimento: ${days}`)
   console.log(`Bitcoin spot --> Qtd Compra: ${spotBuyAmount} preco: ${spotBuyPrice} Qtd Venda: ${spotSelAmount} preco: ${spotSelPrice} financeiro: ${spotFinance}`)
   console.log(`Bitcoin future --> Qtd Compra: ${futureBuyAmount} preco: ${futureBuyPrice} Qtd Venda: ${futureSelAmount} preco: ${futureSelPrice} financeiro: ${futureFinance}`)
   console.log(`Premio: ${payout}`)
-  console.log(`Premio Atualizado: ${updatedPayout}`)
+  console.log(`Premio Atualizado: ${yearPayout}`)
   console.log('---------------')
 }
