@@ -1,8 +1,6 @@
 import 'dotenv/config'
-import { calculateUseCase } from './usecase/CalculateUseCase'
+import { trading } from './usecase/TradeUseCase'
 
-console.log('Starting monitoring...')
+console.log('Starting trading...')
 
-setInterval(async () => {
-  calculateUseCase()
-}, 3000)
+trading()

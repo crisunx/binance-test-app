@@ -25,7 +25,7 @@ export async function depth(symbol: string, limit = 5): Promise<AxiosResponse<Or
 export async function futureDepth(symbol: string, limit = 5): Promise<AxiosResponse<OrderBook>> {
   const config: AxiosRequestConfig = {
     method: 'GET',
-    url: `/fapi/v1/depth?symbol=${symbol}&limit=${limit}`,
+    url: `/dapi/v1/depth?symbol=${symbol}&limit=${limit}`,
   }
 
   return await publicApi().request<OrderBook>(config)
