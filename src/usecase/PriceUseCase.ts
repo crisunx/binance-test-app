@@ -5,9 +5,9 @@ import { serverTime } from '../services/time.service'
 import { Fee } from '../types/fee.type'
 
 export async function takePrice(coinSpot: string, coinFuture: string, spotFee: Fee, futureFee: Fee): Promise<Price> {
+  const time = await serverTime().then((res) => res.data)
   const spot = await spotDepth(coinSpot).then((res) => res.data)
   const future = await futureDepth(coinFuture).then((res) => res.data)
-  const time = await serverTime().then((res) => res.data)
 
   const spotBuyPrice = spot.bids[0][0]
   const spotBuyAmount = spot.bids[0][1]
@@ -18,16 +18,6 @@ export async function takePrice(coinSpot: string, coinFuture: string, spotFee: F
   const futureBuyAmount = future.bids[0][1]
   const futureSelPrice = future.asks[0][0]
   const futureSelAmount = future.asks[0][1]
-
-  // const spotBuyPrice = 0
-  // const spotBuyAmount = 0
-  // const spotSelPrice = 42982.04
-  // const spotSelAmount = 1.06287
-
-  // const futureBuyPrice = 43637.5
-  // const futureBuyAmount = 264
-  // const futureSelPrice = 0
-  // const futureSelAmount = 0
 
   return {
     time: new Date(time.serverTime * 1000),

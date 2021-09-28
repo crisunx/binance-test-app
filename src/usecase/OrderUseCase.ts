@@ -11,104 +11,57 @@ export async function makeOrder(price: Price, days: number): Promise<Order> {
 }
 
 export function calculateOrder(price: Price, days: number, op: Operation): Order {
-  if (op == Operation.START) {
-    return startOrder(price, days, op)
-  } else {
-    return stopOrder(price, days, op)
-  }
-}
+  const support = (op == Operation.START ? 1 : -1)
+  const spotAmount = (op == Operation.START ? price.spot.selAmount : price.spot.buyAmount)
+  const spotPrice = (op == Operation.START ? price.spot.selPrice : price.spot.buyPrice)
+  const futureAmount = (op == Operation.START ? price.future.buyAmount : price.future.selAmount)
+  const futurePrice = (op == Operation.START ? price.future.buyPrice : price.future.selPrice)
 
-export function startOrder(price: Price, days: number, op: Operation): Order {
-  const spotSelPricePlusFee = price.spot.selPrice * (op == Operation.START ? 1 + price.spot.fee : 1 - price.spot.fee)
-  const spotSelCost = -orderAmount * price.spot.selPrice * (op == Operation.START ? 1 : -1)
-  const spotSelCostPlusFee = -Math.abs(price.spot.fee * spotSelCost)
+  const spotPricePlusFee = spotPrice * (op == Operation.START ? 1 + price.spot.fee : 1 - price.spot.fee)
+  const spotFinance = -orderAmount * spotPrice * support
+  const spotFinancePlusFee = -Math.abs(price.spot.fee * spotFinance)
 
-  const futureBuyPricePlusFee = price.future.buyPrice * (op == Operation.START ? 1 - price.future.fee : 1 + price.future.fee)
-  const futureBuyCost = orderAmount * price.future.buyPrice * (op == Operation.START ? 1 : -1)
-  const futureBuyCostPlusFee = -Math.abs(price.future.fee * futureBuyCost)
+  const futurePricePlusFee = futurePrice * (op == Operation.START ? 1 - price.future.fee : 1 + price.future.fee)
+  const futureFinance = support * orderAmount * futurePrice
+  const futureFinancePlusFee = -Math.abs(price.future.fee * futureFinance)
 
-  const payout = (price.future.buyPrice / price.spot.selPrice) - 1
+  const payout = (futurePrice / spotPrice) - 1
   const yearPayout = Math.pow(1 + payout, 365 / days) - 1
-  const payoutPlusFee = (futureBuyPricePlusFee / spotSelPricePlusFee) - 1
+  const payoutPlusFee = (futurePricePlusFee / spotPricePlusFee) - 1
   const yearPayoutPlusFee = Math.pow(1 + payoutPlusFee, 365 / days) - 1
   
-  const finance = spotSelCost + spotSelCostPlusFee + futureBuyCost + futureBuyCostPlusFee
-  const condition = Math.min(price.future.buyAmount, price.spot.selAmount) > orderAmount
+  const effectiveFinance = spotFinance + spotFinancePlusFee + futureFinance + futureFinancePlusFee
+  const condition = Math.min(futureAmount, spotAmount) > orderAmount
 
   return {
     time: new Date(),
     days: days,
     payout: payout,
-    finance: finance,
+    effectiveFinance: effectiveFinance,
     condition: condition,
     yearPayout: yearPayout,
     payoutPlusFee: payoutPlusFee,
     yearPayoutPlusFee: yearPayoutPlusFee,
     spot: {
+      price: spotPrice,
+      amount: spotAmount,
       buyPrice: price.spot.buyPrice,
       buyAmount: price.spot.buyAmount,
-      pricePlusFee: spotSelPricePlusFee,
-      cost: spotSelCost,
-      costPlusFee: spotSelCostPlusFee,
+      pricePlusFee: spotPricePlusFee,
+      finance: spotFinance,
+      financePlusFee: spotFinancePlusFee,
       selPrice: price.spot.selPrice,
       selAmount: price.spot.selAmount,
       fee: price.spot.fee
     },
     future: {
+      price: futurePrice,
+      amount: futureAmount,
       buyPrice: price.future.buyPrice,
       buyAmount: price.future.buyAmount,
-      pricePlusFee: futureBuyPricePlusFee,
-      cost: futureBuyCost,
-      costPlusFee: futureBuyCostPlusFee,
-      selPrice: price.future.selPrice,
-      selAmount: price.future.selAmount,
-      fee: price.future.fee
-    },
-  }
-}
-
-export function stopOrder(price: Price, days: number, op: Operation): Order {
-  const spotBuyPricePlusFee = price.spot.buyPrice * (op == Operation.START ? 1 + price.spot.fee : 1 - price.spot.fee)
-  const spotBuyCost = -orderAmount * price.spot.buyPrice * (op == Operation.START ? 1 : -1)
-  const spotBuyCostPlusFee = -Math.abs(price.spot.fee * spotBuyCost)
-
-  const futureSelPricePlusFee = price.future.selPrice * (op == Operation.START ? 1 - price.future.fee : 1 + price.future.fee)
-  const futureSelCost = orderAmount * price.future.selPrice * (op == Operation.START ? 1 : -1)
-  const futureSelCostPlusFee = -Math.abs(price.future.fee * futureSelCost)
-
-  const payout = (price.future.selPrice / price.spot.buyPrice) - 1
-  const yearPayout = Math.pow(1 + payout, 365 / days) - 1
-  const payoutPlusFee = (futureSelPricePlusFee / spotBuyPricePlusFee) - 1
-  const yearPayoutPlusFee = Math.pow(1 + payoutPlusFee, 365 / days) - 1
-  
-  const finance = spotBuyCost + spotBuyCostPlusFee + futureSelCost + futureSelCostPlusFee
-  const condition = Math.min(price.future.selAmount, price.spot.buyAmount) > orderAmount
-
-  return {
-    time: new Date(),
-    days: days,
-    payout: payout,
-    finance: finance,
-    condition: condition,
-    yearPayout: yearPayout,
-    payoutPlusFee: payoutPlusFee,
-    yearPayoutPlusFee: yearPayoutPlusFee,
-    spot: {
-      buyPrice: price.spot.buyPrice,
-      buyAmount: price.spot.buyAmount,
-      pricePlusFee: spotBuyPricePlusFee,
-      cost: spotBuyCost,
-      costPlusFee: spotBuyCostPlusFee,
-      selPrice: price.spot.selPrice,
-      selAmount: price.spot.selAmount,
-      fee: price.spot.fee
-    },
-    future: {
-      buyPrice: price.future.buyPrice,
-      buyAmount: price.future.buyAmount,
-      pricePlusFee: futureSelPricePlusFee,
-      cost: futureSelCost,
-      costPlusFee: futureSelCostPlusFee,
+      pricePlusFee: futurePricePlusFee,
+      finance: futureFinance,
+      financePlusFee: futureFinancePlusFee,
       selPrice: price.future.selPrice,
       selAmount: price.future.selAmount,
       fee: price.future.fee

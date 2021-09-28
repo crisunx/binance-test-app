@@ -6,13 +6,13 @@ import { calculateOrder } from './OrderUseCase'
 import { savePrice } from './PersistUseCase'
 import { takePrice } from './PriceUseCase'
 
-export async function startMonitoring(coinSpot: string, coinFuture:string,order: Order, spotFee: Fee, futureFee: Fee, days: number): Promise<void> {
+export async function startMonitoring(coinSpot: string, coinFuture:string, order: Order, spotFee: Fee, futureFee: Fee, days: number): Promise<void> {
   const price = await takePrice(coinSpot, coinFuture, spotFee, futureFee)
   const currentOrder = calculateOrder(price, days, Operation.STOP)
-  const pl1 = currentOrder.finance + order.finance
-  const pl2 = pl1 / order.spot.cost
+  const pnlCheck = currentOrder.effectiveFinance + order.effectiveFinance
+  const pnlDivSpotFinance = -pnlCheck / order.spot.finance
 
   console.log(`Take price to spot ${coinSpot} and future ${coinFuture}`)
 
-  savePrice(currentOrder, price, pl1, pl2)
+  savePrice(currentOrder, price, pnlCheck, pnlDivSpotFinance)
 }

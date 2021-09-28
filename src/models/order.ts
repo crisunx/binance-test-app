@@ -4,7 +4,7 @@ export interface Order {
   spot: Item
   future: Item
   payout: number
-  finance: number
+  effectiveFinance: number
   condition: boolean
   yearPayout: number
   payoutPlusFee: number
@@ -12,11 +12,13 @@ export interface Order {
 }
 
 export interface Item {
+    price: number
+    amount: number
     buyPrice: number
     buyAmount: number
     pricePlusFee: number
-    cost: number
-    costPlusFee: number
+    finance: number
+    financePlusFee: number
     selPrice: number
     selAmount: number
     fee: number
