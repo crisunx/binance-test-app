@@ -2,22 +2,29 @@ import 'dotenv/config'
 import { getFutureFee, getSpotFee } from './FeeUseCase'
 import { startMonitoring } from './MonitorUseCase'
 import { makeOrder } from './OrderUseCase'
-import { saveOrder } from './PersistUseCase'
+import { takePrice } from './PriceUseCase'
 
 const interval = +(process.env.CRAWLER_INTERVAL || 3000)
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+const coinSpot: string = process.env.SPOT || ''
+const coinFuture: string[] = JSON.parse(process.env.FUTURE || '')
+const finishDate: string[] = JSON.parse(process.env.FUTURE_FINISH_DATE || '')
 
-export async function trading(): Promise<void> {
+export async function startTrading(): Promise<void> {
   const spotFee = await getSpotFee()
   const futureFee = await getFutureFee()
-  const order = await saveOrder(await makeOrder(spotFee, futureFee))
 
-  console.log(`Make order: ${order.time.toISOString()} payout: ${order.payout}`)
-
-  await delay(interval)
+  const price = await takePrice(coinSpot, coinFuture[0], spotFee, futureFee)
+  const orderDays = Math.floor((Date.parse(finishDate[0]) - Date.now()) / 86400000)
+  const order = await makeOrder(price, orderDays)
+  
+  console.log(`Order: ${order.time.toISOString()} payout: ${order.payout}`)
 
   console.log('Starting monitoring...')
+
   setInterval(async () => {
-    startMonitoring(order, spotFee, futureFee)
+    coinFuture.forEach((coin, idx) => {
+      const days: number = Math.floor((Date.parse(finishDate[idx]) - Date.now()) / 86400000)
+      startMonitoring(coinSpot, coin, order, spotFee, futureFee, days)
+    }) 
   }, interval)
 }

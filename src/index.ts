@@ -1,6 +1,6 @@
 import 'dotenv/config'
-import { trading } from './usecase/TradeUseCase'
+import { startTrading } from './usecase/TradeUseCase'
 
 console.log('Starting trading...')
 
-trading()
+startTrading()

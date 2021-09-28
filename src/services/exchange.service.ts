@@ -4,7 +4,6 @@ import { OrderBook } from '../types/orderbook.type'
 import { publicApi } from './api'
 
 export async function exchangeInfo(symbol: string): Promise<AxiosResponse<AccountInfo>> {
-
   const config: AxiosRequestConfig = {
     method: 'GET',
     url: `/api/v3/exchangeInfo?symbol=${symbol}`,
@@ -13,7 +12,7 @@ export async function exchangeInfo(symbol: string): Promise<AxiosResponse<Accoun
   return await publicApi().request<AccountInfo>(config)
 }
 
-export async function depth(symbol: string, limit = 5): Promise<AxiosResponse<OrderBook>> {
+export async function spotDepth(symbol: string, limit = 5): Promise<AxiosResponse<OrderBook>> {
   const config: AxiosRequestConfig = {
     method: 'GET',
     url: `/api/v3/depth?symbol=${symbol}&limit=${limit}`,
