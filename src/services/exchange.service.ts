@@ -1,5 +1,6 @@
 import { AxiosRequestConfig, AxiosResponse } from 'axios'
 import { AccountInfo } from '../types/accountinfo.type'
+import { PremiumIndex } from '../types/index.type'
 import { OrderBook } from '../types/orderbook.type'
 import { publicApi } from './api'
 
@@ -28,4 +29,13 @@ export async function futureDepth(symbol: string, limit = 5): Promise<AxiosRespo
   }
 
   return await publicApi().request<OrderBook>(config)
+}
+
+export async function futurePremiumIndex(symbol: string | undefined): Promise<AxiosResponse<PremiumIndex[]>> {
+  const config: AxiosRequestConfig = {
+    method: 'GET',
+    url: '/dapi/v1/premiumIndex' + (symbol ? `?symbol=${symbol}` : ''),
+  }
+
+  return await publicApi().request<PremiumIndex[]>(config)
 }

@@ -1,30 +1,64 @@
 import 'dotenv/config'
+import { Order } from '../models/order'
+import { serverTime } from '../services/time.service'
+import { Coin, CoinOperation, Type } from '../types/coin.type'
+import { Fee } from '../types/fee.type'
 import { getFutureFee, getSpotFee } from './FeeUseCase'
 import { startMonitoring } from './MonitorUseCase'
 import { makeOrder } from './OrderUseCase'
+import { saveHeader } from './PersistUseCase'
 import { takePrice } from './PriceUseCase'
 
 const interval = +(process.env.CRAWLER_INTERVAL || 3000)
-const coinSpot: string = process.env.SPOT || ''
-const coinFuture: string[] = JSON.parse(process.env.FUTURE || '')
-const finishDate: string[] = JSON.parse(process.env.FUTURE_FINISH_DATE || '')
+const operations: CoinOperation[] = JSON.parse(process.env.OPERATIONS || '')
 
 export async function startTrading(): Promise<void> {
-  const spotFee = await getSpotFee()
-  const futureFee = await getFutureFee()
+  await saveHeader()
 
-  const price = await takePrice(coinSpot, coinFuture[0], spotFee, futureFee)
-  const orderDays = Math.floor((Date.parse(finishDate[0]) - Date.now()) / 86400000)
-  const order = await makeOrder(price, orderDays)
-  
-  console.log(`Order: ${order.time.toISOString()} payout: ${order.payout}`)
+  const orders = await startPosition()
 
+  await startMonitor(orders)
+}
+
+async function startMonitor(orders : Order[]): Promise<void> {
   console.log('Starting monitoring...')
 
   setInterval(async () => {
-    coinFuture.forEach((coin, idx) => {
-      const days: number = Math.floor((Date.parse(finishDate[idx]) - Date.now()) / 86400000)
-      startMonitoring(coinSpot, coin, order, spotFee, futureFee, days)
-    }) 
+    const time = await serverTime().then((res) => new Date(res.data.serverTime))
+    
+    operations.forEach(async (op, i) => {
+      const coinAFee = await getFee(op.coinA)
+      const coinBFee = await getFee(op.coinB)
+      const days = Math.floor((Date.parse(op.coinB.date) - Date.now()) / 86400000) | 0
+
+      startMonitoring(op.coinA, op.coinB, orders[i], coinAFee, coinBFee, days, time)
+    })
   }, interval)
+}
+
+async function startPosition(): Promise<Order[]> {
+  const orders : Order[] = []
+
+  const time = await serverTime().then((res) => new Date(res.data.serverTime))
+
+  operations.forEach(async (op) => {
+    const coinAFee = await getFee(op.coinA)
+    const coinBFee = await getFee(op.coinB)
+    const price = await takePrice(op.coinA, op.coinB, coinAFee, coinBFee, time)
+    const orderDays = Math.floor((Date.parse(op.coinB.date) - Date.now()) / 86400000) | 0
+    
+    orders.push(await makeOrder(price, orderDays))
+    
+    console.log(`Order: ${op.coinA.symbol}|${op.coinB.symbol} payout: ${orders[0].payout}`)
+  })
+
+  return orders
+}
+
+async function getFee(coin: Coin) : Promise<Fee> {
+  if (coin.type == Type.SPOT) {
+    return await getSpotFee()
+  } else {
+    return await getFutureFee()
+  }
 }

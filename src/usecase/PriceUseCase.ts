@@ -1,41 +1,66 @@
 import 'dotenv/config'
 import { Price } from '../models/price'
-import { futureDepth, spotDepth } from '../services/exchange.service'
-import { serverTime } from '../services/time.service'
+import { futureDepth, futurePremiumIndex, spotDepth } from '../services/exchange.service'
+import { Coin, Type } from '../types/coin.type'
 import { Fee } from '../types/fee.type'
+import { PremiumIndex } from '../types/index.type'
+import { OrderBook } from '../types/orderbook.type'
 
-export async function takePrice(coinSpot: string, coinFuture: string, spotFee: Fee, futureFee: Fee): Promise<Price> {
-  const time = await serverTime().then((res) => res.data)
-  const spot = await spotDepth(coinSpot).then((res) => res.data)
-  const future = await futureDepth(coinFuture).then((res) => res.data)
+export async function takePrice(coinA: Coin, coinB: Coin, coinAFee: Fee, coinBFee: Fee, time: Date): Promise<Price> {
+  const coinAOrderBook = await getOrderBook(coinA)
+  const coinBOrderBook = await getOrderBook(coinB)
+  const coinAPremiumIndex = await getPremiumIndex(coinA)
+  const coinBPremiumIndex = await getPremiumIndex(coinB)
 
-  const spotBuyPrice = spot.bids[0][0]
-  const spotBuyAmount = spot.bids[0][1]
-  const spotSelPrice = spot.asks[0][0]
-  const spotSelAmount = spot.asks[0][1]
+  const coinABuyPrice = coinAOrderBook.bids[0][0]
+  const coinABuyAmount = coinAOrderBook.bids[0][1]
+  const coinASelPrice = coinAOrderBook.asks[0][0]
+  const coinASelAmount = coinAOrderBook.asks[0][1]
 
-  const futureBuyPrice = future.bids[0][0]
-  const futureBuyAmount = future.bids[0][1]
-  const futureSelPrice = future.asks[0][0]
-  const futureSelAmount = future.asks[0][1]
+  const coinBBuyPrice = coinBOrderBook.bids[0][0]
+  const coinBBuyAmount = coinBOrderBook.bids[0][1]
+  const coinBSelPrice = coinBOrderBook.asks[0][0]
+  const coinBSelAmount = coinBOrderBook.asks[0][1]
 
   return {
-    time: new Date(time.serverTime * 1000),
-    spot: {
-      symbol: coinSpot,
-      buyPrice: spotBuyPrice,
-      buyAmount: spotBuyAmount,
-      selPrice: spotSelPrice,
-      selAmount: spotSelAmount,
-      fee: spotFee.takerCommission,
+    time: time,
+    coinA: {
+      type: coinA.type,
+      symbol: coinA.symbol,
+      buyPrice: coinABuyPrice,
+      buyAmount: coinABuyAmount,
+      selPrice: coinASelPrice,
+      selAmount: coinASelAmount,
+      fee: coinAFee.takerCommission,
+      lastFundingRate: (coinAPremiumIndex ? coinAPremiumIndex.lastFundingRate : 0),
+      nextFundingTime: (coinAPremiumIndex ? new Date(coinAPremiumIndex.nextFundingTime) : undefined),
     },
-    future: {
-      symbol: coinFuture,
-      buyPrice: futureBuyPrice,
-      buyAmount: futureBuyAmount,
-      selPrice: futureSelPrice,
-      selAmount: futureSelAmount,
-      fee: futureFee.takerCommission,
+    coinB: {
+      type: coinB.type,
+      symbol: coinB.symbol,
+      buyPrice: coinBBuyPrice,
+      buyAmount: coinBBuyAmount,
+      selPrice: coinBSelPrice,
+      selAmount: coinBSelAmount,
+      fee: coinBFee.takerCommission,
+      lastFundingRate: (coinBPremiumIndex ? coinBPremiumIndex.lastFundingRate : 0),
+      nextFundingTime: (coinBPremiumIndex ? new Date(coinBPremiumIndex.nextFundingTime) : undefined),
     },
+  }
+}
+
+async function getPremiumIndex(coin: Coin): Promise<PremiumIndex|undefined>  {
+  if (coin.type == Type.PERP) {
+    return await futurePremiumIndex(coin.symbol).then((res) => res.data[0])
+  } else {
+    return undefined
+  }
+}
+
+async function getOrderBook(coin: Coin): Promise<OrderBook>  {
+  if (coin.type == Type.SPOT) {
+    return await spotDepth(coin.symbol).then((res) => res.data)
+  } else {
+    return await futureDepth(coin.symbol).then((res) => res.data)
   }
 }

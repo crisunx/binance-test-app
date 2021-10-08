@@ -1,7 +1,9 @@
+import { Type } from "../types/coin.type";
+
 export interface Price {
   time: Date
-  spot: Item
-  future: Item
+  coinA: Item
+  coinB: Item
 }
 
 export interface Item {
@@ -10,5 +12,8 @@ export interface Item {
   buyAmount: number
   selPrice: number
   selAmount: number
-  fee: number
+  fee: number,
+  type: Type
+  lastFundingRate: number
+  nextFundingTime: Date |undefined
 }

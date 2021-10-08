@@ -1,8 +1,8 @@
 export interface Order {
   time: Date
   days: number
-  spot: Item
-  future: Item
+  coinA: Item
+  coinB: Item
   payout: number
   effectiveFinance: number
   condition: boolean
@@ -18,6 +18,7 @@ export interface Item {
     buyAmount: number
     pricePlusFee: number
     finance: number
+    financeMinusOne: number
     financePlusFee: number
     selPrice: number
     selAmount: number
