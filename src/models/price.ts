@@ -14,6 +14,6 @@ export interface Item {
   selAmount: number
   fee: number,
   type: Type
-  lastFundingRate: number
-  nextFundingTime: Date |undefined
+  perpetualLastFundingRate: number
+  perpetualNextFundingTime: Date | undefined
 }

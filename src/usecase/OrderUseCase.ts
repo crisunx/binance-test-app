@@ -29,10 +29,12 @@ export function calculateOrder(price: Price, days: number, op: Operation): Order
   const coinBFinanceMinusOne = orderAmount * (op == Operation.START ? -price.coinB.selPrice : price.coinB.buyPrice)
   const coinBFinancePlusFee = -Math.abs(price.coinB.fee * coinBFinance)
 
-  const payout = (isPerpetual ? ((coinBPrice / coinAPrice) - 1)  + Number(price.coinB.lastFundingRate) : ((coinBPrice / coinAPrice) - 1))
-  const yearPayout = (isPerpetual ? ((payout + (Math.pow(price.coinB.lastFundingRate, (365 * 3))) - 1)) : (Math.pow(1 + payout, 365 / days) - 1))
-  const payoutPlusFee = ((coinBPricePlusFee / coinAPricePlusFee) - 1) + Number(isPerpetual ? price.coinB.lastFundingRate : 0)
-  const yearPayoutPlusFee = (isPerpetual ? ( (payoutPlusFee + (Math.pow(price.coinB.lastFundingRate, (365 * 3))) - 1) ) : (Math.pow(1 + payoutPlusFee, 365 / days) - 1))
+  const payout = ((coinBPrice / coinAPrice) - 1) + (isPerpetual ? Number(price.coinB.perpetualLastFundingRate) : 0)
+  
+  // rever esses calculos 
+  const yearPayout = (isPerpetual ? ((payout + (Math.pow(price.coinB.perpetualLastFundingRate, (365 * 3))) - 1)) : (Math.pow(1 + payout, 365 / days) - 1))
+  const payoutPlusFee = ((coinBPricePlusFee / coinAPricePlusFee) - 1) + Number(isPerpetual ? price.coinB.perpetualLastFundingRate : 0)
+  const yearPayoutPlusFee = (isPerpetual ? ( (payoutPlusFee + (Math.pow(price.coinB.perpetualLastFundingRate, (365 * 3))) - 1) ) : (Math.pow(1 + payoutPlusFee, 365 / days) - 1))
 
   const effectiveFinance = coinAFinance + coinAFinancePlusFee + coinBFinance + coinBFinancePlusFee
   const condition = Math.min(coinBAmount, coinAAmount) > orderAmount
@@ -73,8 +75,4 @@ export function calculateOrder(price: Price, days: number, op: Operation): Order
       fee: price.coinB.fee
     },
   }
-}
-
-function calcPayout(coinBPrice: number, coinAPrice: number): number {
-  return (coinBPrice / coinAPrice) - 1
 }

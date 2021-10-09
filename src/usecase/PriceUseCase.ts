@@ -32,8 +32,8 @@ export async function takePrice(coinA: Coin, coinB: Coin, coinAFee: Fee, coinBFe
       selPrice: coinASelPrice,
       selAmount: coinASelAmount,
       fee: coinAFee.takerCommission,
-      lastFundingRate: (coinAPremiumIndex ? coinAPremiumIndex.lastFundingRate : 0),
-      nextFundingTime: (coinAPremiumIndex ? new Date(coinAPremiumIndex.nextFundingTime) : undefined),
+      perpetualLastFundingRate: (coinAPremiumIndex ? coinAPremiumIndex.lastFundingRate : 0),
+      perpetualNextFundingTime: (coinAPremiumIndex ? new Date(coinAPremiumIndex.nextFundingTime) : undefined),
     },
     coinB: {
       type: coinB.type,
@@ -43,8 +43,8 @@ export async function takePrice(coinA: Coin, coinB: Coin, coinAFee: Fee, coinBFe
       selPrice: coinBSelPrice,
       selAmount: coinBSelAmount,
       fee: coinBFee.takerCommission,
-      lastFundingRate: (coinBPremiumIndex ? coinBPremiumIndex.lastFundingRate : 0),
-      nextFundingTime: (coinBPremiumIndex ? new Date(coinBPremiumIndex.nextFundingTime) : undefined),
+      perpetualLastFundingRate: (coinBPremiumIndex ? coinBPremiumIndex.lastFundingRate : 0),
+      perpetualNextFundingTime: (coinBPremiumIndex ? new Date(coinBPremiumIndex.nextFundingTime) : undefined),
     },
   }
 }
